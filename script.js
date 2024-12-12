@@ -1,17 +1,17 @@
-// Import Three.js (ensure the library is linked in your index.html)
+// Import Three.js 
 const scene = new THREE.Scene(); // Create a scene
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); // Set up the camera
 
 const renderer = new THREE.WebGLRenderer(); // Create a renderer
 renderer.setSize(window.innerWidth, window.innerHeight); // Set the renderer size to match the window
-document.body.appendChild(renderer.domElement); // Append the renderer to the DOM
+document.body.appendChild(renderer.domElement); // Appending the renderer to the DOM
 
 // Create cube geometry and apply textures
 const geometry = new THREE.BoxGeometry(); // Create a cube
 const textureLoader = new THREE.TextureLoader(); // Load textures
 
 // Load the textures for each face of the cube
-const texture1 = textureLoader.load('textures/texture1.jpg'); // Replace with your texture paths
+const texture1 = textureLoader.load('textures/texture1.jpg'); // paths
 const texture2 = textureLoader.load('textures/texture2.jpg');
 const texture3 = textureLoader.load('textures/texture3.jpg');
 const texture4 = textureLoader.load('textures/texture4.jpg');
