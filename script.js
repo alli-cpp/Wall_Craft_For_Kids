@@ -1,65 +1,113 @@
-// Import Three.js 
-const scene = new THREE.Scene(); // Create a scene
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); // Set up the camera
+// set the scene size
+var WIDTH = 700, HEIGHT = 700;
+// set some camera attributes
+var VIEW_ANGLE = 45, ASPECT = WIDTH / HEIGHT, NEAR = 1, FAR = 1000;
+// get the DOM element to attach to
+var $container = $('#container');
+// create a WebGL renderer, camera, and a scene
+var renderer = new THREE.WebGLRenderer();
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+var scene = new THREE.Scene();
+var clock = new THREE.Clock();
+var camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
+var canvas = renderer.domElement;
 
-const renderer = new THREE.WebGLRenderer(); // Create a renderer
-renderer.setSize(window.innerWidth, window.innerHeight); // Set the renderer size to match the window
-document.body.appendChild(renderer.domElement); // Appending the renderer to the DOM
+// Create a listener for the canvas element to track the moving of the user's mouse.
+canvas.addEventListener('mousemove', onMouseMove);
 
-// Create cube geometry and apply textures
-const geometry = new THREE.BoxGeometry(); // Create a cube
-const textureLoader = new THREE.TextureLoader(); // Load textures
+// the camera starts at 0,0,0 so pull it back
+camera.position.z = 200;
+// add the camera to the scene
+scene.add(camera);
 
-// Load the textures for each face of the cube
-const texture1 = textureLoader.load('textures/texture1.jpg'); // paths
-const texture2 = textureLoader.load('textures/texture2.jpg');
-const texture3 = textureLoader.load('textures/texture3.jpg');
-const texture4 = textureLoader.load('textures/texture4.jpg');
+// start the renderer
+renderer.setSize(WIDTH, HEIGHT);
+// attach the render-supplied DOM element
+$container.append(renderer.domElement);
 
-const materials = [
-    new THREE.MeshBasicMaterial({ map: texture1 }), // Front face
-    new THREE.MeshBasicMaterial({ map: texture2 }), // Back face
-    new THREE.MeshBasicMaterial({ map: texture3 }), // Top face
-    new THREE.MeshBasicMaterial({ map: texture4 }), // Bottom face
-    new THREE.MeshBasicMaterial({ color: 0xffffff }), // Left face (default white)
-    new THREE.MeshBasicMaterial({ color: 0xffffff })  // Right face (default white)
-];
+// Create a point light
+var areaLight = new THREE.RectAreaLight(0xffffff, 10);
+var spotLight = new THREE.SpotLight(0xffffff);
+spotLight.position.set(0, 80, 0);
+spotLight.castShadow = true;
+scene.add(areaLight, spotLight);
 
-const cube = new THREE.Mesh(geometry, materials); // Combine geometry and materials into a mesh
-scene.add(cube); // Add the cube to the scene
+// Define the qualities of the shadows
+spotLight.shadow.mapSize.width = 512;
+spotLight.shadow.mapSize.height = 512;
+spotLight.shadow.camera.near = 0.5;
+spotLight.shadow.camera.far = 500;
+spotLight.shadow.focus = 1;
 
-// Add lighting
-const light = new THREE.DirectionalLight(0xffffff, 1); // Create a directional light
-light.position.set(10, 10, 10).normalize(); // Set the position of the light
-scene.add(light); // Add the light to the scene
+// create materials for the atoms and bonds
+var cMaterial = new THREE.MeshPhongMaterial({ color: 0xab0000, emissive: 0xaa2222, shininess: 8, specular: 0x0fffff });
+var hMaterial = new THREE.MeshPhongMaterial({ color: 0x2080aa, emissive: 0x000aa, shininess: 8, specular: 0x0fffff });
+var bMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff, emissive: 0xaaaaaa });
+var pMaterial = new THREE.MeshPhongMaterial({ color: 0x80f080, emissive: 0x001000, side: THREE.DoubleSide });
 
-// Position the camera
-camera.position.z = 5;
+// set up the sphere vars
+var cRadius = 20, cSegments = 35, cRings = 35;
+var hRadius = 10, hSegments = 35, hRings = 35;
 
-// Animation loop
-function animate() {
-    requestAnimationFrame(animate); // Request the next frame
-    cube.rotation.x += 0.01; // Rotate the cube on the x-axis
-    cube.rotation.y += 0.01; // Rotate the cube on the y-axis
-    renderer.render(scene, camera); // Render the scene from the perspective of the camera
+// create meshes for the atoms and bonds
+var carbon = new THREE.Mesh(new THREE.SphereGeometry(cRadius, cSegments, cRings), cMaterial);
+var hydrogen1 = new THREE.Mesh(new THREE.SphereGeometry(hRadius, hSegments, hRings), hMaterial);
+var hydrogen2 = new THREE.Mesh(new THREE.SphereGeometry(hRadius, hSegments, hRings), hMaterial);
+var hydrogen3 = new THREE.Mesh(new THREE.SphereGeometry(hRadius, hSegments, hRings), hMaterial);
+var hydrogen4 = new THREE.Mesh(new THREE.SphereGeometry(hRadius, hSegments, hRings), hMaterial);
+var bond1 = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 60, 35), bMaterial);
+var bond2 = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 60, 35), bMaterial);
+var bond3 = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 60, 35), bMaterial);
+var bond4 = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 60, 35), bMaterial);
+var plane = new THREE.Mesh(new THREE.PlaneGeometry(500, 500, 500), pMaterial);
+
+// Group atoms and bonds together
+var CH4 = new THREE.Group();
+CH4.add(carbon, hydrogen1, hydrogen2, hydrogen3, hydrogen4, bond1, bond2, bond3, bond4);
+scene.add(CH4, plane);
+
+// Set positions and rotations
+hydrogen1.position.y = 50;
+hydrogen2.position.y = -25;
+hydrogen2.position.z = 50;
+hydrogen3.position.x = -50;
+hydrogen3.position.y = -25;
+hydrogen3.position.z = -10;
+hydrogen4.position.x = 50;
+hydrogen4.position.y = -25;
+hydrogen4.position.z = -10;
+bond1.position.y = 20;
+bond2.position.y = -10;
+bond2.position.z = 15;
+bond2.rotation.x = -20;
+bond3.position.x = -15;
+bond3.position.y = -10;
+bond3.position.z = -6;
+bond3.rotation.y = -0.2;
+bond3.rotation.z = -20;
+bond4.position.x = 15;
+bond4.position.y = -10;
+bond4.position.z = -6;
+bond4.rotation.y = 0.2;
+bond4.rotation.z = 20;
+plane.position.y = -55;
+plane.rotation.x = 300;
+
+// Mouse move listener to rotate the molecule
+function onMouseMove(event) {
+    CH4.rotation.x += event.movementY * 0.002;
+    CH4.rotation.y += event.movementX * 0.002;
 }
-animate(); // Start the animation
 
-// Add rotation control with arrow keys
-window.addEventListener('keydown', (event) => {
-    switch (event.key) {
-        case 'ArrowLeft': // Rotate left
-            cube.rotation.y -= 0.1;
-            break;
-        case 'ArrowRight': // Rotate right
-            cube.rotation.y += 0.1;
-            break;
-        case 'ArrowUp': // Rotate up
-            cube.rotation.x -= 0.1;
-            break;
-        case 'ArrowDown': // Rotate down
-            cube.rotation.x += 0.1;
-            break;
-    }
-});
+// Render function
+function animate() {
+    requestAnimationFrame(animate);
+    render();
+}
 
+function render() {
+    renderer.render(scene, camera);
+}
+
+animate();
